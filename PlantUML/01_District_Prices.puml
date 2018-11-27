@@ -1,0 +1,71 @@
+@startuml
+!include "Style.h"
+
+(*) --> "Set path to repository containing the 
+		relevant dataset for this application"
+
+partition "fetch_housing_data( )" {
+	-> "Pull a copy of the data and 
+		extract it to a local directory"
+}
+
+partition "load_housing_data()" {
+	--> "Extract data from local 
+		directory as a //Pandas// dataframe"
+}
+
+-left-> "Use increments of $10,000 from the 
+		//median_income// category to create an 
+		80/20 split of training and testing data"
+
+--> "Split //median_house_value// category 
+	from the training data, this category 
+	will serve as the training labels"
+
+partition "ColumnTransformer( )" {
+	partition "Pipeline( )" #LightGreen {
+	
+		-> "Passes the training data through an 
+			**Imputer** filling in missing values 
+			with the median value of that category"
+		
+		note right
+			All operation in the Pipeline( ) 
+			function operate only on the 
+			numeric categories, text-based 
+			categories are dealt with afterwards
+		end note
+	
+		partition "CombinedAttributesAdder( )" #LightBlue {
+			--> "Append additional categories as combinations 
+				of other existing categories that may have higher 
+				correlation coeficients with the target category."
+		}
+		
+		--> "Scales the data using the **StandardScaler**
+			which computes (//data// - //data.mean( )//) / //data.std( )//"
+	}
+	
+	--> "Encodes categorical data with a **OneHotEncoder**
+		creating a sparse matrix with 1s in the position where 
+		a category is present and 0s in all other positions"
+}
+
+-left-> "Evaluate model performance: 
+		**LinearRegression**"
+		
+--> "Evaluate model performance: 
+	**DecisionTreeRegressor**"
+	
+--> "Evaluate model performance: 
+	**RandomForestRegressor**"
+	
+--> "Leverage **GridSearchCV** to run multiple 
+	tests with different combinations of 
+	hyperparameters to find the optimal values"
+	
+--> "Evaluate model with optimal hyperparameters"
+
+--> "Computer confidence intervance for predictions"
+
+@enduml
